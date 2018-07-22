@@ -1,0 +1,23 @@
+
+{
+    "name": "keesschepers/trengo-api",
+    "description": "PHP interface for accesing the Trengo Rest API",
+    "license": "MIT",
+    "keywords": ["Trengo", "Trengo API"],
+    "authors": [
+        {
+            "name": "Kees Schepers",
+            "email": "kees@keesschepers.nl"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "ext-xml": "*",
+        "guzzlehttp/guzzle": ">=3.7"
+    },
+    "autoload": {
+        "psr-4" : {
+            "Keesschepers\\TrengoApi\\" : ["src/"]
+        }
+    }
+}
