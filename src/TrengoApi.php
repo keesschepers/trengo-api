@@ -4,6 +4,7 @@ namespace Keesschepers\TrengoApi;
 
 use GuzzleHttp;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 
 class TrengoApi
 {
@@ -38,7 +39,7 @@ class TrengoApi
                 'profiles',
                 [
                     'json' => [
-                        'name' => $name,
+                        'name' => iconv('utf-8', 'ascii//TRANSLIT', $name),
                         'created_by' => $user->getId(),
                     ]
                 ]
@@ -144,7 +145,7 @@ class TrengoApi
         $data = [
             'email' => $email,
             'phone' => $phone,
-            'name' => $name,
+            'name' => iconv('utf-8', 'ascii//TRANSLIT', $name),
             'custom_field_data' => $customFieldData,
         ];
 
@@ -169,6 +170,50 @@ class TrengoApi
                 ->setEmail(array_key_exists('email', $contact) ? $contact['email'] : null);
 
         } catch (RequestException $e) {
+            throw new ApiException('Creating trengo profile failed.', 0, $e);
+        } catch (ServerException $e) {
+            throw new ApiException('Creating trengo profile failed.', 0, $e);
+        }
+    }
+
+    public function updateContact(Contact $contact, $email = null, $phone = null, $name = null, array $customFieldData = [])
+    {
+        if (is_null($contact->getId())) {
+            throw new ApiException('Impossible to update contact without ID');
+        }
+
+        if (!is_null($email) && !is_null($phone)) {
+            throw new ApiException('Either phone or email should be given not both');
+        }
+
+        $client = $this->createClient();
+
+        $data = [
+            'email' => $email,
+            'phone' => $phone,
+            'name' => iconv('utf-8', 'ascii//TRANSLIT', $name),
+            'custom_field_data' => $customFieldData,
+        ];
+
+        try {
+            $response = $client->post(
+                sprintf('contacts/%s', $contact->getId()),
+                [
+                    'json' => array_filter($data, function($value) { return !is_null($value); }),
+                ]
+            );
+
+            $contact = json_decode((string)$response->getBody(), true);
+
+            return (new Contact())
+                ->setId($contact['id'])
+                ->setFullName($contact['full_name'])
+                ->setPhone(array_key_exists('phone', $contact) ? $contact['phone'] : null)
+                ->setEmail(array_key_exists('email', $contact) ? $contact['email'] : null);
+
+        } catch (RequestException $e) {
+            throw new ApiException('Creating trengo profile failed.', 0, $e);
+        } catch (ServerException $e) {
             throw new ApiException('Creating trengo profile failed.', 0, $e);
         }
     }
